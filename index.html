@@ -764,6 +764,7 @@ body{
                 </select>
 
                 <button class="btn" onclick="startQuiz()">开始刷题 ▶</button>
+                <button class="btn btn-outline hidden" id="btnResume" onclick="resumeQuiz()" style="margin-top:8px">📌 继续上次刷题</button>
 
                 <div class="stats">
                     <div class="stat">
@@ -8231,7 +8232,7 @@ function initSelectors(){
 }
 
 // ==================== STORAGE ====================
-const KW='jjf_wrong3', KF='jjf_fav3', KS2='jjf_stats2', KR2='jjf_recent2';
+const KW='jjf_wrong3', KF='jjf_fav3', KS2='jjf_stats2', KR2='jjf_recent2', KQ='jjf_quiz2';
 function ld(k){try{var v=JSON.parse(localStorage.getItem(k));return v!=null?v:null}catch{return null}}
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function isW(id){var a=ld(KW);return a?a.includes(id):false}
@@ -8239,6 +8240,29 @@ function isF(id){var a=ld(KF);return a?a.includes(id):false}
 function addW(id){var a=ld(KW)||[];if(!a.includes(id)){a.push(id);sv(KW,a)}}
 function rmW(id){var a=ld(KW)||[];sv(KW,a.filter(x=>x!==id))}
 function tgF(id){var a=ld(KF)||[];if(a.includes(id)){a=a.filter(x=>x!==id);sv(KF,a);return false}else{a.push(id);sv(KF,a);return true}}
+
+// ==================== QUIZ AUTO-SAVE ====================
+function saveQuizState(){
+    if(!st.questions.length)return;
+    sv(KQ,{
+        ids:st.questions.map(function(q){return q.id;}),
+        idx:st.idx, good:st.good, bad:st.bad,
+        answers:st.answers, mode:st.mode
+    });
+}
+function clearQuizState(){sv(KQ,null);}
+function getSavedQuiz(){
+    var s=ld(KQ);
+    if(!s||!s.ids||!s.ids.length)return null;
+    var qs=[];
+    for(var i=0;i<s.ids.length;i++){
+        var found=Q.find(function(q){return q.id===s.ids[i];});
+        if(found)qs.push(found);
+    }
+    if(!qs.length)return null;
+    s.questions=qs;
+    return s;
+}
 
 // ==================== TOAST ====================
 let tt;
@@ -8262,6 +8286,21 @@ function goPage(p){
 
 // ==================== QUIZ STATE ====================
 let st={questions:[],idx:0,selected:null,answered:false,good:0,bad:0,mode:'chapter',answers:{}};
+
+function resumeQuiz(){
+    var saved=getSavedQuiz();
+    if(!saved){toast('没有可恢复的进度','ng');return;}
+    st={questions:saved.questions,idx:saved.idx,selected:null,answered:false,
+        good:saved.good||0,bad:saved.bad||0,mode:saved.mode||'chapter',
+        answers:saved.answers||{}};
+    document.getElementById('dashContent').classList.add('hidden');
+    document.getElementById('quizActive').classList.remove('hidden');
+    document.getElementById('resultBox').classList.add('hidden');
+    document.querySelector('#quizActive .nav-row').classList.remove('hidden');
+    document.querySelectorAll('.nav div').forEach(function(x){x.classList.remove('active');});
+    document.querySelector('.nav div[data-pg="quiz"]').classList.add('active');
+    renderQ();
+}
 
 function startQuiz(){
     const ch=document.getElementById('chSelect').value;
@@ -8368,6 +8407,7 @@ function submit(){
         if(st.mode==='chapter')addW(q.id);
     }
     st.answers[st.idx]=ua;
+    saveQuizState();
     document.getElementById('qzGoodNum').textContent=st.good;
     document.getElementById('qzBadNum').textContent=st.bad;
     document.getElementById('btnNext').disabled=false;
@@ -8388,6 +8428,7 @@ function saveCurQ(){
     st.answered=true;
     document.getElementById('qzGoodNum').textContent=st.good;
     document.getElementById('qzBadNum').textContent=st.bad;
+    saveQuizState();
     toast('[诊断] 已保存 Q'+(st.idx+1)+' 答案='+ua+' st.answers['+st.idx+']='+st.answers[st.idx],'ok');
 }
 function nextQ(){
@@ -8402,6 +8443,7 @@ function prevQ(){
 }
 
 function showResult(){
+    clearQuizState();
     document.getElementById('cardContainer').innerHTML='';
     document.querySelector('#quizActive .nav-row').classList.add('hidden');
     const t=st.questions.length,g=st.good,pct=Math.round(g/t*100);
@@ -8459,6 +8501,10 @@ function updateDashboardStats(){
     const pct=s.done>0?Math.round((s.correct||0)/(s.done||1)*100):0;
     document.getElementById('statRate').textContent=pct+'%';
     document.getElementById('statWrong').textContent=s.wrong||0;
+    // Show/hide resume button
+    var saved=getSavedQuiz();
+    var btn=document.getElementById('btnResume');
+    if(btn)btn.classList.toggle('hidden',!saved);
 }
 
 // ==================== WRONG BOOK ====================
