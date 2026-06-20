@@ -8321,7 +8321,6 @@ function renderQ(){
     const q=st.questions[st.idx];if(!q)return;
     const multi=q.type==='多选题';
     const prevAns=st.answers[st.idx];
-    toast('[诊断] renderQ idx='+st.idx+' prevAns='+(prevAns||'无'),'info');
     if(prevAns!==undefined){
         st.answered=true;
         if(multi)st.selected=new Set(prevAns.split(''));
@@ -8415,10 +8414,9 @@ function submit(){
 }
 
 function saveCurQ(){
-    toast('[诊断] saveCurQ调用, answered='+st.answered+' selected='+(st.selected?JSON.stringify(typeof st.selected==='string'?st.selected:[...st.selected]):'null'),'info');
-    if(st.answered){toast('[诊断] 跳过-已提交','info');return;}
+    if(st.answered)return;
     var sel=st.selected;
-    if(!sel||(typeof sel!=='string'&&sel.size===0)){toast('[诊断] 跳过-无选择','info');return;}
+    if(!sel||(typeof sel!=='string'&&sel.size===0))return;
     var ua=typeof sel==='string'?sel:[...sel].sort().join('');
     var q=st.questions[st.idx];
     var ok=ua===q.answer;
@@ -8429,7 +8427,6 @@ function saveCurQ(){
     document.getElementById('qzGoodNum').textContent=st.good;
     document.getElementById('qzBadNum').textContent=st.bad;
     saveQuizState();
-    toast('[诊断] 已保存 Q'+(st.idx+1)+' 答案='+ua+' st.answers['+st.idx+']='+st.answers[st.idx],'ok');
 }
 function nextQ(){
     saveCurQ();
