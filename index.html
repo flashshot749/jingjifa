@@ -8373,13 +8373,28 @@ function submit(){
     if(st.idx>=st.questions.length-1)document.getElementById('btnNext').textContent='查看结果 📊';
 }
 
+function saveCurQ(){
+    if(st.answered)return;
+    var sel=st.selected;
+    if(!sel||(typeof sel!=='string'&&sel.size===0))return;
+    var ua=typeof sel==='string'?sel:[...sel].sort().join('');
+    var q=st.questions[st.idx];
+    var ok=ua===q.answer;
+    if(ok){st.good++;if(st.mode==='chapter'&&isW(q.id))rmW(q.id);}
+    else{st.bad++;if(st.mode==='chapter')addW(q.id);}
+    st.answers[st.idx]=ua;
+    st.answered=true;
+    document.getElementById('qzGoodNum').textContent=st.good;
+    document.getElementById('qzBadNum').textContent=st.bad;
+    toast(ok?'✅ 已记录':'❌ 已记录','info');
+}
 function nextQ(){
-    if(!st.answered&&(st.selected&&(typeof st.selected==='string'||st.selected.size>0)))submit();
+    saveCurQ();
     if(st.idx>=st.questions.length-1){showResult();return}
     st.idx++;renderQ();
 }
 function prevQ(){
-    if(!st.answered&&(st.selected&&(typeof st.selected==='string'||st.selected.size>0)))submit();
+    saveCurQ();
     if(st.idx<=0)return;
     st.idx--;renderQ();
 }
