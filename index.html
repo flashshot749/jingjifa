@@ -8261,7 +8261,7 @@ function goPage(p){
 }
 
 // ==================== QUIZ STATE ====================
-let st={questions:[],idx:0,selected:null,answered:false,good:0,bad:0,mode:'chapter'};
+let st={questions:[],idx:0,selected:null,answered:false,good:0,bad:0,mode:'chapter',answers:{}};
 
 function startQuiz(){
     const ch=document.getElementById('chSelect').value;
@@ -8270,7 +8270,7 @@ function startQuiz(){
     if(ch!=='all')qs=qs.filter(q=>q.chapter===ch);
     if(tp!=='all')qs=qs.filter(q=>q.type===tp);
     if(!qs.length){toast('没有符合条件的题目','ng');return}
-    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'chapter'};
+    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'chapter',answers:{}};
     document.getElementById('dashContent').classList.add('hidden');
     document.getElementById('quizActive').classList.remove('hidden');
     document.getElementById('resultBox').classList.add('hidden');
@@ -8281,10 +8281,18 @@ function startQuiz(){
 function renderQ(){
     const q=st.questions[st.idx];if(!q)return;
     const multi=q.type==='多选题';
-    st.selected=multi?new Set():null;st.answered=false;
+    const prevAns=st.answers[st.idx];
+    if(prevAns!==undefined){
+        st.answered=true;
+        if(multi)st.selected=new Set(prevAns.split(''));
+        else st.selected=prevAns;
+    }else{
+        st.selected=multi?new Set():null;st.answered=false;
+    }
     const pc=multi?'multi':(q.type==='判断题'?'judge':'single');
     const pn=multi?'多选题':(q.type==='判断题'?'判断题':'单选题');
     const hint=multi?'（多选）':(q.type==='判断题'?'（判断）':'（单选）');
+    const right=new Set((prevAns===q.answer?q.answer:'').split(''));
 
     document.getElementById('cardContainer').innerHTML=`
         <div class="q-card" id="qCard">
@@ -8292,21 +8300,28 @@ function renderQ(){
             <div class="q-text">${q.question}</div>
             <div class="opts">${q.options.map((o,i)=>{
                 const l=o.substring(0,1);
-                return `<button class="opt" data-l="${l}" onclick="selOpt(this,'${l}')"><span class="opt-letter">${l}</span><span class="opt-text">${o.substring(3)}</span></button>`;
+                var cls='opt';
+                if(prevAns!==undefined){
+                    const rset=new Set(q.answer.split(''));
+                    if(rset.has(l))cls+=' correct';
+                    else if(prevAns.split('').includes(l))cls+=' wrong';
+                }
+                return '<button class="'+cls+'" data-l="'+l+'" onclick="selOpt(this,\''+l+'\')"><span class="opt-letter">'+l+'</span><span class="opt-text">'+o.substring(3)+'</span></button>';
             }).join('')}</div>
             <div class="card-actions">
-                <button class="btn" id="btnSub" onclick="submit()">提交验证</button>
+                <button class="btn" id="btnSub" onclick="submit()" ${prevAns!==undefined?'disabled':''}>提交验证</button>
                 ${st.mode==='chapter'?`<button class="btn btn-sm btn-outline" style="flex:0" onclick="favQ(${q.id},this)">${isF(q.id)?'★ 已收藏':'☆ 收藏'}</button>`:''}
             </div>
-            <div class="fb" id="fb"></div>
+            <div class="fb${prevAns!==undefined?(prevAns===q.answer?' good':' bad'):''}" id="fb">${prevAns!==undefined?(prevAns===q.answer?'✅ 回答正确！':'❌ 回答错误  正确答案：'+q.answer):''}</div>
         </div>`;
     document.getElementById('qzCounter').textContent=`第${st.idx+1}/${st.questions.length}题`;
     document.getElementById('qzGoodNum').textContent=st.good;
     document.getElementById('qzBadNum').textContent=st.bad;
     document.getElementById('qzMiniBar').style.width=((st.idx+1)/st.questions.length*100)+'%';
     document.getElementById('btnPrev').disabled=st.idx===0;
-    document.getElementById('btnNext').disabled=true;
-    document.getElementById('btnNext').textContent='下一题 ▶';
+    document.getElementById('btnNext').disabled=prevAns===undefined;
+    document.getElementById('btnNext').textContent=st.idx>=st.questions.length-1?'查看结果 📊':'下一题 ▶';
+    if(prevAns!==undefined)document.getElementById('btnSub').disabled=true;
 }
 
 function selOpt(btn,l){
@@ -8351,14 +8366,23 @@ function submit(){
         setTimeout(()=>document.getElementById('qCard').style.animation='',500);
         if(st.mode==='chapter')addW(q.id);
     }
+    st.answers[st.idx]=ua;
     document.getElementById('qzGoodNum').textContent=st.good;
     document.getElementById('qzBadNum').textContent=st.bad;
     document.getElementById('btnNext').disabled=false;
     if(st.idx>=st.questions.length-1)document.getElementById('btnNext').textContent='查看结果 📊';
 }
 
-function nextQ(){if(st.idx>=st.questions.length-1){showResult();return}st.idx++;renderQ()}
-function prevQ(){if(st.idx<=0)return;st.idx--;renderQ()}
+function nextQ(){
+    if(!st.answered&&(st.selected&&(typeof st.selected==='string'||st.selected.size>0)))submit();
+    if(st.idx>=st.questions.length-1){showResult();return}
+    st.idx++;renderQ();
+}
+function prevQ(){
+    if(!st.answered&&(st.selected&&(typeof st.selected==='string'||st.selected.size>0)))submit();
+    if(st.idx<=0)return;
+    st.idx--;renderQ();
+}
 
 function showResult(){
     document.getElementById('cardContainer').innerHTML='';
@@ -8449,7 +8473,7 @@ function retakeWrong(){
     let qs=Q.filter(q=>ids.includes(q.id));
     if(ch!=='all')qs=qs.filter(q=>q.chapter===ch);
     if(!qs.length){toast('没有可重刷的错题','ng');return}
-    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'wrong'};
+    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'wrong',answers:{}};
     // Force hide quizActive so goPage('quiz') won't trigger resetQuiz()
     document.getElementById('quizActive').classList.add('hidden');
     goPage('quiz');
@@ -8489,7 +8513,7 @@ function retakeFav(){
     let qs=Q.filter(q=>ids.includes(q.id));
     if(ch!=='all')qs=qs.filter(q=>q.chapter===ch);
     if(!qs.length){toast('没有可刷的收藏题目','ng');return}
-    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'fav'};
+    st={questions:qs,idx:0,selected:null,answered:false,good:0,bad:0,mode:'fav',answers:{}};
     // Force hide quizActive so goPage('quiz') won't trigger resetQuiz()
     document.getElementById('quizActive').classList.add('hidden');
     goPage('quiz');
