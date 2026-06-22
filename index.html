@@ -23,7 +23,8 @@ body{
     max-width:480px;
     margin:0 auto;
     background:#f5f7fb;
-    min-height:100dvh;
+    height:100dvh;
+    overflow:hidden;
     display:flex;
     flex-direction:column;
 }
@@ -32,9 +33,10 @@ body{
 .header{
     background: linear-gradient(135deg,#c0392b,#e74c3c);
     color:#fff;
-    padding:24px 20px 50px;
+    padding:20px 20px 35px;
     position:relative;
     overflow:hidden;
+    flex-shrink:0;
 }
 
 .header-top{
@@ -632,19 +634,27 @@ body{
 }
 
 /* ===== memo star ===== */
-.memo-star{
-    display:inline-block;
-    padding:2px 8px;
-    margin-left:6px;
-    font-size:18px;
+.memo-star-wrap{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-left:8px;
+    font-size:11px;
+    color:#bbb;
     cursor:pointer;
-    border:none;
-    background:none;
-    vertical-align:middle;
     user-select:none;
     -webkit-user-select:none;
+    vertical-align:middle;
 }
-.memo-star.checked{color:#e6a817}
+.memo-star-wrap .star-icon{
+    font-size:22px;
+    line-height:1;
+    color:#ddd;
+    transition:.2s;
+}
+.memo-star-wrap.checked .star-icon{color:#f5a623}
+.memo-star-wrap.checked{color:#f5a623}
+.memo-star-wrap .star-label{font-weight:500}
 
 .memo-item{
     border-bottom:1px solid #f0f0f0;
@@ -8799,7 +8809,7 @@ function renderMemo(){
         let idx=m.text.indexOf("。");
         if(idx<0)idx=Math.min(60,m.text.length);
         let preview=m.text.substring(0,idx+1);
-        return '<div class="memo-item" onclick="this.classList.toggle(\'open\')"><div class="memo-ch">'+m.chapter+'</div><div class="memo-q">'+preview+'<button class="memo-star'+(starred?' checked':'')+'" onclick="event.stopPropagation();var r=tgMB('+gIdx+');this.classList.toggle(\'checked\',r)" title="标记已背">★</button></div><div class="memo-a">'+m.text.replace(/\n/g,"<br/>")+'</div></div>';
+        return '<div class="memo-item" onclick="this.classList.toggle(\'open\')"><div class="memo-ch">'+m.chapter+'</div><div class="memo-q">'+preview+'<span class="memo-star-wrap'+(starred?' checked':'')+'" onclick="event.stopPropagation();var r=tgMB('+gIdx+');var p=this.parentNode.parentNode;var w=p.querySelector(\'.memo-star-wrap\');if(r){w.classList.add(\'checked\');w.querySelector(\'.star-label\').textContent=\'已背诵\'}else{w.classList.remove(\'checked\');w.querySelector(\'.star-label\').textContent=\'未背诵\'}"><span class="star-icon">★</span><span class="star-label">'+(starred?'已背诵':'未背诵')+'</span></span></div><div class="memo-a">'+m.text.replace(/\n/g,"<br/>")+'</div></div>';
     }).join("");
 }
 
