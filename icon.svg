@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#c0392b"/>
+  <text x="256" y="210" text-anchor="middle" font-size="180" font-family="sans-serif" font-weight="bold" fill="white">经</text>
+  <text x="256" y="370" text-anchor="middle" font-size="60" font-family="sans-serif" fill="rgba(255,255,255,0.85)">经济法</text>
+</svg>
