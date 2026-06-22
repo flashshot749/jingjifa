@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 背景圆 -->
+    <group android:translateX="22" android:translateY="22">
+        <path
+            android:fillColor="#c0392b"
+            android:pathData="M32,0 C49.7,0 64,14.3 64,32 C64,49.7 49.7,64 32,64 C14.3,64 0,49.7 0,32 C0,14.3 14.3,0 32,0 Z" />
+    </group>
+
+    <!-- "经" 字 -->
+    <group android:translateX="27" android:translateY="22">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M14,12 L14,16 L18,16 L18,20 L14,20 L14,32 L18,32 L18,54 L34,54 L34,32 L38,32 L38,20 L34,20 L34,16 L44,16 L44,12 L14,12 Z"/>
+    </group>
+</vector>
